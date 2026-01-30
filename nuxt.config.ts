@@ -52,16 +52,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: 'http://localhost:8001/api',
-
-      // RGB STRINGS — NOT HEX
-      defaultTheme: {
-        primary: process.env.APP_PRIMARY_COLOR || '79 70 229',
-        secondary: process.env.APP_SECONDARY_COLOR || '16 185 129',
-        bg: '249 250 251',
-        surface: '255 255 255',
-        text: '17 24 39'
-      }
-    }
+    },
   },
 
   /* ===============================
@@ -72,7 +63,16 @@ export default defineNuxtConfig({
       title: 'Notivio',
       meta: [
         { name: 'description', content: 'Collaborative jotting app' }
-      ]
+      ],
+      style: [
+        {
+          children: `
+            :root {
+              --primary-color: #A084D6;
+            }
+          `,
+        },
+      ],
     }
   }
 })

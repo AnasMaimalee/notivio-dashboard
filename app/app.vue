@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { theme } from 'ant-design-vue'
-const { $applyTheme } = useNuxtApp()
-const config = useRuntimeConfig()
+import { ConfigProvider } from 'ant-design-vue'
 
-onMounted(() => {
-  $applyTheme(config.public.defaultTheme, 'light')
-})
+const theme = {
+  token: {
+    colorPrimary: '#A084D6',
+    borderRadius: 12,
+    colorBgContainer: '#ffffff',
+  },
+}
 </script>
 
 <template>
-  <Html lang="en">
+  <ConfigProvider :theme="theme">
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-  </Html>
+  </ConfigProvider>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, type DefineComponent } from 'vue'
+import { ref, computed, onMounted, type DefineComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 
@@ -44,16 +44,15 @@ const error = ref(false)
 const saving = ref(false)
 
 /* -----------------------------
-   FETCH JOTTING (FIXED)
+   FETCH JOTTING
 ----------------------------- */
 const fetchJotting = async () => {
   pending.value = true
   error.value = false
 
   try {
-    const res = await $api(`/jottings/${route.params.id}`)
-    jotting.value = res
-  } catch (e) {
+    jotting.value = await $api(`/jottings/${route.params.id}`)
+  } catch {
     error.value = true
     message.error('Failed to load jotting')
   } finally {
@@ -145,11 +144,10 @@ function updateBlock(block: VirtualBlock, payload: any) {
   saveJotting()
 }
 </script>
-
-
 <template>
   <div class="max-w-3xl mx-auto space-y-10">
-    <page-header  title="Jotting" back/>
+    <PageHeader title="Jotting" back />
+
     <!-- Loading -->
     <div v-if="pending" class="text-center py-20 opacity-60">
       Loading jotting…
@@ -162,10 +160,12 @@ function updateBlock(block: VirtualBlock, payload: any) {
 
     <!-- Content -->
     <template v-else>
+      <!-- a11y -->
       <h1 class="sr-only">
         {{ jotting?.title || 'Jotting' }}
       </h1>
 
+      <!-- Title -->
       <input
         v-model="jottingTitle"
         class="w-full text-3xl font-semibold bg-transparent
@@ -173,16 +173,18 @@ function updateBlock(block: VirtualBlock, payload: any) {
         placeholder="Untitled jotting"
       />
 
+      <!-- Blocks -->
       <div class="space-y-8">
         <component
-          v-for="block in blocks"
-          :key="block.id"
-          :is="blockComponents[block.type]"
-          v-bind="block"
-          @update="val => updateBlock(block, val)"
-        />
+            v-for="block in blocks"
+            :key="block.id"
+            :is="blockComponents[block.type]"
+            :block="block"
+            @update="payload => updateBlock(block, payload)"
+            />
       </div>
 
+      <!-- Saving -->
       <div
         v-if="saving"
         class="fixed bottom-6 right-6 text-xs opacity-60"
@@ -190,6 +192,5 @@ function updateBlock(block: VirtualBlock, payload: any) {
         Saving…
       </div>
     </template>
-
   </div>
 </template>

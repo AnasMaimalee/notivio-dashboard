@@ -1,7 +1,13 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import TextBlock from '@/components/jotting/TextBlock.vue'
 import VoiceBlock from '@/components/jotting/VoiceBlock.vue'
 import SketchBlock from '@/components/jotting/SketchBlock.vue'
+
+definePageMeta({
+    middleware: 'auth',
+    layout: 'dashboard'
+})
 
 type TextBlockType = {
   id: string
@@ -64,9 +70,7 @@ function resolveBlock(type: Block['type']) {
   return SketchBlock
 }
 
-/**
- * 🔥 Save to backend (ready)
- */
+/** Save jotting */
 async function saveJotting() {
   const form = new FormData()
 
@@ -95,67 +99,52 @@ async function saveJotting() {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-8">
+  <div class="max-w-3xl mx-auto py-8">
 
     <!-- Header -->
-    <div class="space-y-1">
+    <div class="mb-6">
       <h1 class="text-2xl font-semibold">New Jotting</h1>
       <p class="text-sm opacity-60">
         Mix text, voice notes, and sketches freely.
       </p>
     </div>
 
-    <!-- Blocks -->
-    <div class="space-y-6">
-     <component
-        v-for="(block, index) in blocks"
-        :key="block.id"
-        :is="resolveBlock(block.type)"
-        :model-value="block"
-        @update:model-value="blocks[index] = $event"
+    <!-- Content Card -->
+    <a-card :bordered="false" class="shadow-sm">
+      <div class="space-y-6">
+        <component
+          v-for="(block, index) in blocks"
+          :key="block.id"
+          :is="resolveBlock(block.type)"
+          :model-value="block"
+          @update:model-value="blocks[index] = $event"
         />
-
-    </div>
+      </div>
+    </a-card>
 
     <!-- Toolbar -->
-    <div class="sticky bottom-6 flex justify-center gap-3">
-
-      <button
-        @click="addBlock('text')"
-        class="px-4 py-2 rounded-full
-               bg-surface border border-primary/20
-               hover:bg-primary/10 transition"
-      >
+    <div
+      class="sticky bottom-6 mt-8
+             flex justify-center gap-3"
+    >
+      <a-button @click="addBlock('text')">
         ✍️ Text
-      </button>
+      </a-button>
 
-      <button
-        @click="addBlock('voice')"
-        class="px-4 py-2 rounded-full
-               bg-surface border border-primary/20
-               hover:bg-primary/10 transition"
-      >
+      <a-button @click="addBlock('voice')">
         🎙 Voice
-      </button>
+      </a-button>
 
-      <button
-        @click="addBlock('sketch')"
-        class="px-4 py-2 rounded-full
-               bg-surface border border-primary/20
-               hover:bg-primary/10 transition"
-      >
+      <a-button @click="addBlock('sketch')">
         ✏️ Sketch
-      </button>
+      </a-button>
 
-      <button
+      <a-button
+        type="primary"
         @click="saveJotting"
-        class="px-5 py-2 rounded-full
-               bg-primary text-white font-medium
-               hover:opacity-90 transition"
       >
         Save
-      </button>
-
+      </a-button>
     </div>
 
   </div>

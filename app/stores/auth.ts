@@ -5,8 +5,8 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as any,
     token: null as string | null,
-    theme: null as any,
-    menus: [] as Array<any>, // add menus array
+    menus: [] as Array<any>,
+    initialized: false, // 👈 important
   }),
 
   getters: {
@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(payload: { email: string; password: string }) {
       const { $api } = useNuxtApp()
+
       const res: any = await $api('/auth/login', {
         method: 'POST',
         body: payload,
@@ -24,34 +25,46 @@ export const useAuthStore = defineStore('auth', {
 
       this.token = res.token
       this.user = res.user
-      this.theme = res.theme
-      this.menus = res.menus // store menus from backend
+      this.menus = res.menus
 
+      // ✅ persist token
+      localStorage.setItem('token', res.token)
     },
 
     async logout() {
       const { $api } = useNuxtApp()
-      await $api('/auth/logout', { method: 'POST' })
 
-      this.token = null
-      this.user = null
-      this.theme = null
-      this.menus = []
-      navigateTo('/login')
+      try {
+        await $api('/auth/logout', { method: 'POST' })
+      } finally {
+        this.$reset()
+        localStorage.removeItem('token')
+        navigateTo('/auth/login')
+      }
     },
 
-   async fetchMe() {
-    const { $api, $applyTheme } = useNuxtApp()
-    const res: any = await $api('/auth/me')
+    /** Restore session on refresh */
+    async fetchMe() {
+      const { $api } = useNuxtApp()
 
-    this.user = res.user
-    this.theme = res.theme
-    this.menus = res.menus
+      const token = localStorage.getItem('token')
+      if (!token) {
+        this.initialized = true
+        return
+      }
 
-    if (res.theme) {
-        $applyTheme(res.theme, 'light')
-    }
+      this.token = token
+
+      try {
+        const res: any = await $api('/auth/me')
+        this.user = res.user
+        this.menus = res.menus
+      } catch {
+        this.$reset()
+        localStorage.removeItem('token')
+      } finally {
+        this.initialized = true
+      }
     },
   },
 })
-

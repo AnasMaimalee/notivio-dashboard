@@ -1,119 +1,126 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useState } from '#app'
-import { notify } from '@/utils/notify' // <-- global notification helper
 import { message } from 'ant-design-vue'
-const { $applyTheme } = useNuxtApp()
-
-const router = useRouter()
-const theme = useState('theme')
 
 definePageMeta({
-    layouts: 'auth',
+  layout: 'auth',
 })
-// form state
-const email = ref('')
-const password = ref('')
+
+const router = useRouter()
 const loading = ref(false)
 
-// Biometric login placeholder
+const formState = ref({
+  email: '',
+  password: '',
+})
+
 function loginBiometric() {
-  notify('info', 'FaceID / Touch login triggered')
+  message.info('FaceID / Touch login triggered')
 }
-const { $api } = useNuxtApp()
 
 async function login() {
   loading.value = true
   try {
     const auth = useAuthStore()
 
-    await auth.login({
-      email: email.value,
-      password: password.value,
-    })
+    await auth.login(formState.value)
 
-    // Apply theme if present
-    if (auth.theme) {
-      $applyTheme(auth.theme, 'light')
-    }
-
-    // Redirect
     const firstMenu = auth.menus?.[0]?.route || '/dashboard'
     router.push(firstMenu)
-
   } catch (e: any) {
     message.error(e?.data?.error || 'Login failed')
   } finally {
     loading.value = false
   }
 }
-
-
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-6 bg-bg text-text">
-    <div class="max-w-md w-full space-y-6">
-      <h1 class="text-3xl font-bold text-center">Welcome Back</h1>
-      <p class="text-center text-sm opacity-60">Capture your thoughts, sketches, and voice notes.</p>
+  <div class="min-h-screen flex items-center justify-center px-4">
+    <a-card
+      class="w-full max-w-md shadow-md" 
+      :bordered="false"
+      :style="{
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
+        borderRadius: '12px'
+  }"
 
-      <form @submit.prevent="login" class="space-y-4">
-        <!-- Email -->
-        <div>
-          <label class="block text-sm font-medium">Email</label>
-          <input
-            v-model="email"
-            type="email"
-            required
+
+    >
+      <!-- Header -->
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-semibold mb-1">Welcome Back</h1>
+        <p class="text-sm opacity-70">
+          Capture your thoughts, sketches, and voice notes.
+        </p>
+      </div>
+
+      <!-- Form -->
+      <a-form
+        layout="vertical"
+        :model="formState"
+        @finish="login"
+      >
+        <a-form-item
+          label="Email"
+          name="email"
+          :rules="[{ required: true, type: 'email', message: 'Please enter a valid email' }]"
+        >
+          <a-input
+            v-model:value="formState.email"
             placeholder="you@example.com"
-            class="w-full p-3 rounded-lg border border-primary/20 focus:border-primary focus:ring focus:ring-primary/20"
+            size="large"
           />
-        </div>
+        </a-form-item>
 
-        <!-- Password -->
-        <div>
-          <label class="block text-sm font-medium">Password</label>
-          <input
-            v-model="password"
-            type="password"
-            required
+        <a-form-item
+          label="Password"
+          name="password"
+          :rules="[{ required: true, message: 'Please enter your password' }]"
+        >
+          <a-input-password
+            v-model:value="formState.password"
             placeholder="••••••••"
-            class="w-full p-3 rounded-lg border border-primary/20 focus:border-primary focus:ring focus:ring-primary/20"
+            size="large"
           />
+        </a-form-item>
+
+        <div class="flex justify-end mb-4">
+          <NuxtLink to="/auth/forgot-password" class="text-sm">
+            Forgot password?
+          </NuxtLink>
         </div>
 
-        <!-- Forgot password -->
-        <div class="flex justify-end text-sm opacity-70">
-          <NuxtLink to="/auth/forgot-password" class="hover:text-primary">Forgot password?</NuxtLink>
-        </div>
+        <a-form-item>
+          <a-button
+            type="primary"
+            html-type="submit"
+            size="large"
+            block
+            :loading="loading"
+          >
+            Login
+          </a-button>
+        </a-form-item>
 
-        <!-- Login button -->
-        <div class="space-y-2">
-            <button
-            type="submit"
-            :disabled="loading"
-            class="w-full py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition mb-2"
-            >
-            {{ loading ? 'Logging in...' : 'Login' }}
-            </button>
-            <div class="mt-2"></div>
-            <!-- Biometric login -->
-            <button
-            type="button"
-            @click="loginBiometric"
-            class="w-full mt-3 py-3 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition"
-            >
-            Login with FaceID / Touch
-            </button>
-        </div>
-      </form>
+        <a-button
+          block
+          size="large"
+          type="default"
+          @click="loginBiometric"
+        >
+          Login with FaceID / Touch
+        </a-button>
+      </a-form>
 
-      <!-- Register link -->
-      <p class="text-center text-sm opacity-70">
+      <!-- Footer -->
+      <div class="text-center mt-6 text-sm opacity-70">
         Don’t have an account?
-        <NuxtLink to="/auth/register" class="text-primary font-medium hover:underline">Register</NuxtLink>
-      </p>
-    </div>
+        <NuxtLink to="/auth/register" class="font-medium">
+          Register
+        </NuxtLink>
+      </div>
+    </a-card>
   </div>
 </template>
