@@ -51,7 +51,12 @@ export default defineNuxtConfig({
   ================================ */
   runtimeConfig: {
     public: {
-      apiBase: 'http://localhost:8001/api',
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL,
+      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL,
+      primaryColor: process.env.NUXT_PUBLIC_PRIMARY_COLOR,
+      secondaryColor: process.env.NUXT_PUBLIC_SECONDARY_COLOR,
+      appName: process.env.NUXT_APP_NAME,
+      debug: process.env.NUXT_PUBLIC_DEBUG === 'true',
     },
   },
 
