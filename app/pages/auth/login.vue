@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 
@@ -15,6 +15,11 @@ const formState = ref({
   password: '',
 })
 
+// Compute if login button should be disabled
+const isDisabled = computed(() => {
+  return !formState.value.email.trim() || !formState.value.password.trim()
+})
+
 function loginBiometric() {
   message.info('FaceID / Touch login triggered')
 }
@@ -23,9 +28,7 @@ async function login() {
   loading.value = true
   try {
     const auth = useAuthStore()
-
     await auth.login(formState.value)
-
     const firstMenu = auth.menus?.[0]?.route || '/dashboard'
     router.push(firstMenu)
   } catch (e: any) {
@@ -39,14 +42,9 @@ async function login() {
 <template>
   <div class="min-h-screen flex items-center justify-center px-4">
     <a-card
-      class="w-full max-w-md shadow-md" 
+      class="w-full max-w-md shadow-md"
       :bordered="false"
-      :style="{
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
-        borderRadius: '12px'
-  }"
-
-
+      :style="{ boxShadow: '0 10px 30px rgba(0,0,0,0.08)', borderRadius: '12px' }"
     >
       <!-- Header -->
       <div class="text-center mb-6">
@@ -57,11 +55,7 @@ async function login() {
       </div>
 
       <!-- Form -->
-      <a-form
-        layout="vertical"
-        :model="formState"
-        @finish="login"
-      >
+      <a-form layout="vertical" :model="formState" @finish="login">
         <a-form-item
           label="Email"
           name="email"
@@ -99,6 +93,7 @@ async function login() {
             size="large"
             block
             :loading="loading"
+            :disabled="isDisabled"
           >
             Login
           </a-button>
