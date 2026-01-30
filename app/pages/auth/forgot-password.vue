@@ -1,40 +1,76 @@
 <script setup lang="ts">
-const email = ref('')
-const submitted = ref(false)
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+
+definePageMeta({ layout: 'auth' })
+
+const router = useRouter()
+const loading = ref(false)
+const formState = ref({ email: '' })
+
 const { $api } = useNuxtApp()
 
 async function sendResetLink() {
+  if (!formState.value.email.trim()) {
+    message.warning('Please enter your email')
+    return
+  }
+
+  loading.value = true
   try {
     await $api('/auth/forgot-password', {
       method: 'POST',
-      body: { email: email.value }
+      body: { email: formState.value.email }
     })
-    submitted.value = true
-  } catch (e) {
+    message.success('✅ Reset link sent! Check your email.')
+    formState.value.email = ''
+  } catch (e: any) {
     console.error(e)
+    message.error(e?.data?.error || 'Failed to send reset link')
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <template>
   <div class="min-h-screen flex items-center justify-center px-4 bg-bg text-text">
-    <div class="w-full max-w-md space-y-6 bg-surface border border-primary/10 rounded-3xl p-8">
-      
-      <h1 class="text-2xl font-bold text-center">Forgot Password</h1>
-      <p class="text-center opacity-70">Enter your email to receive reset instructions</p>
-
-      <div v-if="!submitted" class="space-y-4">
-        <input v-model="email" placeholder="Email" class="input" type="email" />
-        <button @click="sendResetLink" class="w-full btn-primary">Send Reset Link</button>
+    <a-card
+      class="w-full max-w-md shadow-md"
+      :bordered="false"
+      :style="{ boxShadow: '0 10px 30px rgba(0,0,0,0.08)', borderRadius: '12px' }"
+    >
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-semibold mb-1">Forgot Password</h1>
+        <p class="text-sm opacity-70">Enter your email to receive reset instructions</p>
       </div>
 
-      <div v-else class="text-center text-primary">
-        ✅ Reset link sent! Check your email.
-      </div>
+      <a-form layout="vertical" @submit.prevent="sendResetLink">
+        <a-form-item label="Email" required>
+          <a-input
+            v-model:value="formState.email"
+            placeholder="you@example.com"
+            size="large"
+          />
+        </a-form-item>
 
-      <NuxtLink to="/auth/login" class="block text-center text-sm text-primary mt-4">
-        Back to Login
-      </NuxtLink>
-    </div>
+        <a-form-item>
+          <a-button
+            type="primary"
+            size="large"
+            block
+            :loading="loading"
+            :disabled="!formState.email.trim()"
+          >
+            Send Reset Link
+          </a-button>
+        </a-form-item>
+      </a-form>
+
+      <div class="text-center mt-4 text-sm opacity-70">
+        <NuxtLink to="/auth/login" class="font-medium">Back to Login</NuxtLink>
+      </div>
+    </a-card>
   </div>
 </template>

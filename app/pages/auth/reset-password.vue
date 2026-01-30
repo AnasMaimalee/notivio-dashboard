@@ -1,65 +1,102 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+
+definePageMeta({ layout: 'auth' })
 
 const route = useRoute()
-const token = route.query.token || ''
-const { $api } = useNuxtApp()
-
-const form = reactive({
-  email: '',
+const router = useRouter()
+const loading = ref(false)
+const formState = ref({
   password: '',
-  password_confirmation: '',
-  token
+  confirmPassword: ''
+})
+const token = ref('')
+
+// Grab token from query
+onMounted(() => {
+  token.value = route.query.token as string || ''
+  if (!token.value) {
+    message.error('Invalid or missing token')
+    router.push('/auth/login')
+  }
 })
 
-const rules = computed(() => ({
-  length: form.password.length >= 8,
-  uppercase: /[A-Z]/.test(form.password),
-  number: /\d/.test(form.password),
-  special: /[^A-Za-z0-9]/.test(form.password)
-}))
-
-const strong = computed(() => Object.values(rules.value).every(Boolean))
+const { $api } = useNuxtApp()
 
 async function resetPassword() {
-  if (!strong.value) return
+  if (!formState.value.password || !formState.value.confirmPassword) {
+    message.warning('Please fill all fields')
+    return
+  }
+  if (formState.value.password !== formState.value.confirmPassword) {
+    message.error('Passwords do not match')
+    return
+  }
 
+  loading.value = true
   try {
     await $api('/auth/reset-password', {
       method: 'POST',
-      body: form
+      body: { token: token.value, password: formState.value.password }
     })
-    navigateTo('/auth/login')
-  } catch (e) {
+    message.success('✅ Password reset successfully!')
+    router.push('/auth/login')
+  } catch (e: any) {
     console.error(e)
+    message.error(e?.data?.error || 'Failed to reset password')
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <template>
   <div class="min-h-screen flex items-center justify-center px-4 bg-bg text-text">
-    <div class="w-full max-w-md space-y-6 bg-surface border border-primary/10 rounded-3xl p-8">
-      <h1 class="text-2xl font-bold text-center">Reset Password</h1>
-      <p class="text-center opacity-70">Enter your new password</p>
+    <a-card
+      class="w-full max-w-md shadow-md"
+      :bordered="false"
+      :style="{ boxShadow: '0 10px 30px rgba(0,0,0,0.08)', borderRadius: '12px' }"
+    >
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-semibold mb-1">Reset Password</h1>
+        <p class="text-sm opacity-70">Enter your new password</p>
+      </div>
 
-      <form @submit.prevent="resetPassword" class="space-y-4">
-        <input v-model="form.email" placeholder="Email" class="input" type="email" />
-        <input v-model="form.password" placeholder="New Password" class="input" type="password" />
-        <input v-model="form.password_confirmation" placeholder="Confirm Password" class="input" type="password" />
+      <a-form layout="vertical" @submit.prevent="resetPassword">
+        <a-form-item label="New Password" required>
+          <a-input-password
+            v-model:value="formState.password"
+            placeholder="••••••••"
+            size="large"
+          />
+        </a-form-item>
 
-        <ul class="text-xs space-y-1 mb-2">
-          <li :class="rules.length ? 'text-primary' : 'opacity-40'">• At least 8 characters</li>
-          <li :class="rules.uppercase ? 'text-primary' : 'opacity-40'">• One uppercase letter</li>
-          <li :class="rules.number ? 'text-primary' : 'opacity-40'">• One number</li>
-          <li :class="rules.special ? 'text-primary' : 'opacity-40'">• One special character</li>
-        </ul>
+        <a-form-item label="Confirm Password" required>
+          <a-input-password
+            v-model:value="formState.confirmPassword"
+            placeholder="••••••••"
+            size="large"
+          />
+        </a-form-item>
 
-        <button :disabled="!strong" class="w-full btn-primary disabled:opacity-40">Reset Password</button>
-      </form>
+        <a-form-item>
+          <a-button
+            type="primary"
+            size="large"
+            block
+            :loading="loading"
+            :disabled="!formState.password || !formState.confirmPassword"
+          >
+            Reset Password
+          </a-button>
+        </a-form-item>
+      </a-form>
 
-      <NuxtLink to="/auth/login" class="block text-center text-sm text-primary mt-4">
-        Back to Login
-      </NuxtLink>
-    </div>
+      <div class="text-center mt-4 text-sm opacity-70">
+        <NuxtLink to="/auth/login" class="font-medium">Back to Login</NuxtLink>
+      </div>
+    </a-card>
   </div>
 </template>
