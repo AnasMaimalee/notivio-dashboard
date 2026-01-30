@@ -1,8 +1,9 @@
 <script setup lang="ts">
 const inbox = ref<any[]>([])
+const { $api } = useNuxtApp()
 
 onMounted(async () => {
-  inbox.value = await $fetch('/api/contributions/inbox')
+  inbox.value = await $api('/api/contributions/inbox')
 })
 </script>
 

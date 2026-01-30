@@ -26,6 +26,10 @@ export const useAuthStore = defineStore('auth', {
       this.user = res.user
       this.theme = res.theme
       this.menus = res.menus // store menus from backend
+
+      if(res.theme){
+        $applyTheme(res.theme, 'light')
+      }
     },
 
     async logout() {

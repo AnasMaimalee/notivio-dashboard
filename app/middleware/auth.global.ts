@@ -2,7 +2,7 @@ export default defineNuxtRouteMiddleware((to) => {
   const auth = useAuthStore()
 
   // Public routes
-  const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password']
+  const publicRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password', '/index']
 
   if (publicRoutes.includes(to.path)) {
     return
@@ -10,7 +10,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
   // Not logged in
   if (!auth.isAuthenticated) {
-    return navigateTo('/login')
+    return navigateTo('/auth/login')
   }
 
   // Check menu access

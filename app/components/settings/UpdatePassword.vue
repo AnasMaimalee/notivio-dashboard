@@ -5,6 +5,7 @@ const form = reactive({
   new_password: '',
   password_confirmation: ''
 })
+const { $api } = useNuxtApp()
 
 const rules = computed(() => ({
   length: form.new_password.length >= 8,
@@ -19,7 +20,7 @@ async function updatePassword() {
   if (!strong.value) return
 
   try {
-    await $fetch('/api/profile/change-password', {
+    await $api('/api/profile/change-password', {
       method: 'POST',
       body: form
     })

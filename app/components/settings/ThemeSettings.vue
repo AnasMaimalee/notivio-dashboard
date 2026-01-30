@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { useState, useNuxtApp } from '#app'
+const { $api } = useNuxtApp()
 
 const themeForm = reactive({
   primary: '',
@@ -14,7 +15,7 @@ const { $applyTheme } = useNuxtApp()
 // fetch current theme from backend on mounted
 onMounted(async () => {
   try {
-    const res = await $fetch('/api/profile/theme')
+    const res = await $api('/api/profile/theme')
     themeForm.primary = res.primary_color
     themeForm.secondary = res.secondary_color
   } catch (e) {
@@ -25,7 +26,7 @@ onMounted(async () => {
 // update backend and apply theme dynamically
 async function updateTheme() {
   try {
-    await $fetch('/api/profile/theme', {
+    await $api('/api/profile/theme', {
       method: 'POST',
       body: themeForm
     })

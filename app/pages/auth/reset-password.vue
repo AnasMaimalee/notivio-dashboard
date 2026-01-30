@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const token = route.query.token || ''
+const { $api } = useNuxtApp()
 
 const form = reactive({
   email: '',
@@ -24,7 +25,7 @@ async function resetPassword() {
   if (!strong.value) return
 
   try {
-    await $fetch('/api/auth/reset-password', {
+    await $api('/auth/reset-password', {
       method: 'POST',
       body: form
     })

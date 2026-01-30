@@ -17,12 +17,13 @@ const loading = ref(false)
 function loginBiometric() {
   notify('info', 'FaceID / Touch login triggered')
 }
+const { $api } = useNuxtApp()
 
 async function login() {
   loading.value = true
 
   try {
-    const res = await $fetch('/api/auth/login', {
+    const res = await $api('/auth/login', {
       method: 'POST',
       body: {
         email: email.value,
@@ -84,32 +85,34 @@ async function login() {
 
         <!-- Forgot password -->
         <div class="flex justify-end text-sm opacity-70">
-          <NuxtLink to="/forgot-password" class="hover:text-primary">Forgot password?</NuxtLink>
+          <NuxtLink to="/auth/forgot-password" class="hover:text-primary">Forgot password?</NuxtLink>
         </div>
 
         <!-- Login button -->
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition"
-        >
-          {{ loading ? 'Logging in...' : 'Login' }}
-        </button>
-
-        <!-- Biometric login -->
-        <button
-          type="button"
-          @click="loginBiometric"
-          class="w-full py-3 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition"
-        >
-          Login with FaceID / Touch
-        </button>
+        <div class="space-y-2">
+            <button
+            type="submit"
+            :disabled="loading"
+            class="w-full py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition mb-2"
+            >
+            {{ loading ? 'Logging in...' : 'Login' }}
+            </button>
+            <div class="mt-2"></div>
+            <!-- Biometric login -->
+            <button
+            type="button"
+            @click="loginBiometric"
+            class="w-full mt-3 py-3 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition"
+            >
+            Login with FaceID / Touch
+            </button>
+        </div>
       </form>
 
       <!-- Register link -->
       <p class="text-center text-sm opacity-70">
         Don’t have an account?
-        <NuxtLink to="/register" class="text-primary font-medium hover:underline">Register</NuxtLink>
+        <NuxtLink to="/auth/register" class="text-primary font-medium hover:underline">Register</NuxtLink>
       </p>
     </div>
   </div>

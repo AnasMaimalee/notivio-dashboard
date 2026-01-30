@@ -1,67 +1,100 @@
 <script setup lang="ts">
-import PageHeader from '@/components/PageHeader.vue'
 import { computed } from 'vue'
+import Sidebar from '@/components/layout/Sidebar.vue'
+import { useAuthStore } from '@/stores/auth'
+import { useNuxtApp } from '#app'
 
-const { $api } = useNuxtApp()
 const auth = useAuthStore()
+const { $api } = useNuxtApp()
 
-// Fetch dashboard data
+// Fetch admin dashboard data
 const { data, pending, error } = await useAsyncData('admin-dashboard', () =>
   $api('/admin/dashboard')
 )
 
-const stats = computed(() => data.value?.stats ?? {})
-const recentJottings = computed(() => data.value?.recent_jottings ?? [])
+const stats = computed(() => data.value?.stats ?? {
+  total_users: 0,
+  total_jottings: 0,
+  pending_contributions: 0,
+  active_courses: 0
+})
+
+const recentUsers = computed(() => data.value?.recent_users ?? [])
+
+/** Handlers */
+function changeRole(user: any, role: string) {
+  user.role = role
+  $api(`/admin/users/${user.id}/role`, { method: 'POST', body: { role } })
+}
+
+function toggleStatus(user: any) {
+  user.active = !user.active
+  $api(`/admin/users/${user.id}/status`, { method: 'POST', body: { active: user.active } })
+}
+
+/** Table columns */
+const columns = [
+  { title: 'Name', dataIndex: 'name', key: 'name' },
+  { title: 'Email', dataIndex: 'email', key: 'email' },
+  { title: 'Role', key: 'role' },
+  { title: 'Active', key: 'active' },
+  { title: 'Last Login', dataIndex: 'last_login', key: 'last_login' }
+]
 </script>
 
 <template>
-  <div class="space-y-10">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <Sidebar />
 
-    <PageHeader title="Admin Dashboard" subtitle="Overview of system activity" />
+    <!-- Main Content -->
+    <main class="flex-1 p-6 bg-bg text-text">
 
-    <div v-if="pending" class="opacity-60">Loading dashboard…</div>
-    <div v-else-if="error" class="text-red-500">Failed to load dashboard</div>
-    <template v-else>
-      <!-- Quick Stats -->
-      <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="rounded-2xl bg-surface p-5 border border-primary/10">
-          <p class="text-sm opacity-60">Total Users</p>
-          <p class="text-2xl font-bold mt-2">{{ stats.total_users || 0 }}</p>
-        </div>
+      <!-- Header -->
+      <section class="mb-6">
+        <h1 class="text-2xl font-semibold">Admin Dashboard</h1>
+        <p class="opacity-70 mt-1">Manage users, courses, and contributions at a glance.</p>
+      </section>
 
-        <div class="rounded-2xl bg-surface p-5 border border-primary/10">
-          <p class="text-sm opacity-60">Total Jottings</p>
-          <p class="text-2xl font-bold mt-2">{{ stats.total_jottings || 0 }}</p>
-        </div>
-
-        <div class="rounded-2xl bg-surface p-5 border border-primary/10">
-          <p class="text-sm opacity-60">Pending Contributions</p>
-          <p class="text-2xl font-bold mt-2">{{ stats.pending_contributions || 0 }}</p>
+      <!-- Stats -->
+      <section class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+        <div class="rounded-2xl bg-surface p-5 border border-primary/10" v-for="(value, key) in stats" :key="key">
+          <p class="text-sm opacity-60">{{ key.replaceAll('_', ' ').toUpperCase() }}</p>
+          <p class="text-2xl font-bold mt-2">{{ value }}</p>
         </div>
       </section>
 
-      <!-- Recent Jottings -->
+      <!-- Recent Users Table -->
       <section>
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold">Recent Jottings</h2>
-          <NuxtLink to="/admin/jottings" class="text-sm hover:text-primary">View all</NuxtLink>
+          <h2 class="text-lg font-semibold">Recent Users</h2>
+          <NuxtLink to="/admin/users" class="text-sm hover:text-primary">View all</NuxtLink>
         </div>
 
-        <div v-if="recentJottings.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <NuxtLink
-            v-for="j in recentJottings"
-            :key="j.id"
-            :to="`/admin/jottings/${j.id}`"
-            class="rounded-2xl bg-surface p-5 border border-primary/10 hover:shadow-md transition"
-          >
-            <h3 class="font-medium">{{ j.title || 'Untitled Jotting' }}</h3>
-            <p class="text-sm opacity-60 mt-2 line-clamp-2">{{ j.summary || 'Text, voice & sketches.' }}</p>
-            <div class="text-xs opacity-50 mt-4">{{ new Date(j.updated_at).toLocaleDateString() }}</div>
-          </NuxtLink>
-        </div>
-        <div v-else class="opacity-60">No jottings yet.</div>
+        <a-table :columns="columns" :data-source="recentUsers" row-key="id">
+          <!-- Role Column -->
+          <template #bodyCell="{ column, record }" v-if="column.key === 'role'">
+            <a-select
+              v-model="record.role"
+              size="small"
+              style="width: 110px"
+              @change="val => changeRole(record, val)"
+            >
+              <a-select-option value="user">User</a-select-option>
+              <a-select-option value="admin">Admin</a-select-option>
+            </a-select>
+          </template>
+
+          <!-- Active Column -->
+          <template #bodyCell="{ column, record }" v-if="column.key === 'active'">
+            <a-switch
+              v-model:checked="record.active"
+              @change="() => toggleStatus(record)"
+            />
+          </template>
+        </a-table>
       </section>
-    </template>
 
+    </main>
   </div>
 </template>

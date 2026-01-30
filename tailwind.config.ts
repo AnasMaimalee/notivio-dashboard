@@ -1,5 +1,11 @@
 export default {
- darkMode: 'class',
+  darkMode: 'class',
+    content: [
+    './app/**/*.{vue,ts,js}',
+    './components/**/*.{vue,ts,js}',
+    './pages/**/*.{vue,ts,js}',
+    './assets/css/tailwind.css',
+    ],
   theme: {
     extend: {
       colors: {
@@ -8,7 +14,7 @@ export default {
         bg: 'var(--color-bg)',
         surface: 'var(--color-surface)',
         text: 'var(--color-text)',
-        }
-    }
-  }
+      },
+    },
+  },
 }

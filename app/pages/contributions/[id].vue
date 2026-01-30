@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ContributionEditor from '@/components/contribution/ContributionEditor.vue'
+const { $api } = useNuxtApp()
 
 const route = useRoute()
 const loading = ref(true)
@@ -11,7 +12,7 @@ onMounted(async () => {
 })
 
 async function submit() {
-  await $fetch(`/api/contributions/${route.params.id}/submit`, {
+  await $api(`/api/contributions/${route.params.id}/submit`, {
     method: 'POST'
   })
   navigateTo('/shared')

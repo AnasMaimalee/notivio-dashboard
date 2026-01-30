@@ -1,17 +1,31 @@
+type ThemeColors = {
+  primary?: string
+  secondary?: string
+  bg?: string
+  surface?: string
+  text?: string
+}
+
 export default defineNuxtPlugin(() => {
-  const applyTheme = (theme: any, mode: 'light' | 'dark') => {
+  const applyTheme = (
+    theme: ThemeColors,
+    mode: 'light' | 'dark' = 'light'
+  ) => {
     const root = document.documentElement
-    const colors = theme[mode]
 
-    root.style.setProperty('--color-primary', theme.primary)
-    root.style.setProperty('--color-secondary', theme.secondary)
+    // Apply colors
+    Object.entries(theme).forEach(([key, value]) => {
+      if (!value) return
+      root.style.setProperty(`--${key}`, value)
+    })
 
-    root.style.setProperty('--color-bg', colors.bg)
-    root.style.setProperty('--color-surface', colors.surface)
-    root.style.setProperty('--color-text', colors.text)
+    // Theme mode
+    root.dataset.theme = mode
   }
 
   return {
-    provide: { applyTheme }
+    provide: {
+      applyTheme,
+    },
   }
 })

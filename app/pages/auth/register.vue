@@ -5,6 +5,7 @@ const form = reactive({
   password: '',
   password_confirmation: ''
 })
+const { $api } = useNuxtApp()
 
 const rules = computed(() => ({
   length: form.password.length >= 8,
@@ -20,7 +21,7 @@ const strong = computed(() =>
 async function register() {
   if (!strong.value) return
 
-  await $fetch('/api/auth/register', {
+  await $api('/auth/register', {
     method: 'POST',
     body: form
   })

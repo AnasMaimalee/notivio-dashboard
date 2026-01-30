@@ -1,10 +1,11 @@
 <script setup lang="ts">
 const email = ref('')
 const submitted = ref(false)
+const { $api } = useNuxtApp()
 
 async function sendResetLink() {
   try {
-    await $fetch('/api/auth/forgot-password', {
+    await $api('/auth/forgot-password', {
       method: 'POST',
       body: { email: email.value }
     })

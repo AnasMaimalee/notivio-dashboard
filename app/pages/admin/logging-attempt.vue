@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PageHeader from '@/components/PageHeader.vue'
 import { ref } from 'vue'
+const { $api } = useNuxtApp()
 
 interface LoginAttempt {
   id: string

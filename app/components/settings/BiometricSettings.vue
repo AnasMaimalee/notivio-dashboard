@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 const biometricEnabled = ref(false)
+const { $api } = useNuxtApp()
 
 // fetch initial state from backend
 onMounted(async () => {
   try {
-    const res = await $fetch('/api/profile/security')
+    const res = await $api('/api/profile/security')
     biometricEnabled.value = res.biometric_enabled
   } catch (e) {
     console.error(e)

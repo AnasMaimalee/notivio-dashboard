@@ -1,6 +1,15 @@
+<script setup lang="ts">
+import { theme } from 'ant-design-vue'
+const { $applyTheme } = useNuxtApp()
+const config = useRuntimeConfig()
+
+onMounted(() => {
+  $applyTheme(config.public.defaultTheme, 'light')
+})
+</script>
+
 <template>
-  <div>
-    <NuxtRouteAnnouncer />
-    <NuxtWelcome />
-  </div>
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>

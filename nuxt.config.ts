@@ -1,10 +1,22 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+
   devtools: { enabled: true },
-  css: ['./app/assets/css/main.css'],
+
+  /* ===============================
+     GLOBAL CSS
+  ================================ */
+  css: [
+    '~/assets/css/main.css',
+    'ant-design-vue/dist/reset.css',
+  ],
+
+  /* ===============================
+     MODULES
+  ================================ */
   modules: [
     '@nuxt/a11y',
     '@nuxt/content',
@@ -13,39 +25,54 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/scripts',
     '@nuxt/test-utils',
-    '@nuxt/ui'
+    '@nuxt/ui',
+    '@pinia/nuxt'
   ],
+
+  /* ===============================
+     COLOR MODE
+     (we control it manually)
+  ================================ */
   colorMode: {
-      classSuffix: '',
-      preference: 'system',
-      fallback: 'light'
-    },
-   vite: {
-    plugins: [
-      tailwindcss(),
-    ],
+    classSuffix: '',
+    preference: 'light', // let backend decide
+    fallback: 'light'
   },
 
+  /* ===============================
+     VITE
+  ================================ */
+  vite: {
+    plugins: [tailwindcss()]
+  },
+
+  /* ===============================
+     RUNTIME CONFIG (RGB ONLY)
+  ================================ */
   runtimeConfig: {
     public: {
-      defaultPrimary: process.env.APP_PRIMARY_COLOR || '#4f46e5',
-      defaultSecondary: process.env.APP_SECONDARY_COLOR || '#10b981',
-      apiBase: 'http://localhost:8001/api', // Laravel backend
-    },
+      apiBase: 'http://localhost:8001/api',
+
+      // RGB STRINGS — NOT HEX
+      defaultTheme: {
+        primary: process.env.APP_PRIMARY_COLOR || '79 70 229',
+        secondary: process.env.APP_SECONDARY_COLOR || '16 185 129',
+        bg: '249 250 251',
+        surface: '255 255 255',
+        text: '17 24 39'
+      }
+    }
   },
 
-  css: [
-    '~/assets/css/main.css',
-    'ant-design-vue/dist/antd.css'
-  ],
-
+  /* ===============================
+     APP META
+  ================================ */
   app: {
     head: {
       title: 'Notivio',
       meta: [
-        { name: 'description', content: 'Collaborative jotting app' },
-      ],
-    },
-  },
-
+        { name: 'description', content: 'Collaborative jotting app' }
+      ]
+    }
+  }
 })

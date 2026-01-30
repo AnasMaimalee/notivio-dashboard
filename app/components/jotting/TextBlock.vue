@@ -1,21 +1,12 @@
 <script setup lang="ts">
-const props = defineProps<{
-  modelValue: any
-  readonly?: boolean
-}>()
+import { defineModel } from '#imports'
 
-const emit = defineEmits(['update:modelValue'])
+const block = defineModel<{ id: string; type: 'text'; content: string }>()
 </script>
 
 <template>
   <textarea
-    :value="props.modelValue.content"
-    :readonly="readonly"
-    @input="emit('update:modelValue', {
-      ...props.modelValue,
-      content: ($event.target as HTMLTextAreaElement).value
-    })"
-    class="w-full min-h-[140px] bg-surface rounded-2xl p-4
-           border border-primary/10"
+    v-model="block.content"
+    class="w-full min-h-[140px] p-4 rounded-2xl border border-primary/10 bg-surface"
   />
 </template>

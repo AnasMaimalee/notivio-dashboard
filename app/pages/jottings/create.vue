@@ -107,12 +107,14 @@ async function saveJotting() {
 
     <!-- Blocks -->
     <div class="space-y-6">
-      <component
-        v-for="block in blocks"
+     <component
+        v-for="(block, index) in blocks"
         :key="block.id"
         :is="resolveBlock(block.type)"
-        v-model="block"
-      />
+        :model-value="block"
+        @update:model-value="blocks[index] = $event"
+        />
+
     </div>
 
     <!-- Toolbar -->

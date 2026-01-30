@@ -1,54 +1,96 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 
 import TextBlock from '@/components/jotting/TextBlock.vue'
 import VoiceBlock from '@/components/jotting/VoiceBlock.vue'
 import SketchBlock from '@/components/jotting/SketchBlock.vue'
 
+type BlockType = 'text' | 'voice' | 'sketch'
+
+const blockComponents: Record<BlockType, DefineComponent<{}, {}, any>> = {
+  text: TextBlock,
+  voice: VoiceBlock,
+  sketch: SketchBlock
+}
 const route = useRoute()
 const { $api } = useNuxtApp()
 
-const jotting = ref<any>(null)
+// jotting state
+const jotting = ref<{
+  id: string
+  title: string
+  blocks: Array<any>
+} | null>(null)
+
 const saving = ref(false)
 
-/**
- * Fetch jotting
- */
-const { pending } = await useAsyncData('jotting', async () => {
-  jotting.value = await $api(`/jottings/${route.params.id}`)
-})
+// fetch jotting via useAsyncData
+const { data, pending, error } = useAsyncData('jotting', () => 
+  $api(`/jottings/${route.params.id}`)
+)
 
-/**
- * Autosave block
- */
-async function saveBlock(block: any) {
+// populate jotting once data loads
+if (data.value) jotting.value = data.value
+
+// --- AUTOSAVE BLOCK ---
+async function saveBlock(updatedBlock: any) {
   saving.value = true
   try {
-    await $api(`/blocks/${block.id}`, {
+    await $api(`/blocks/${updatedBlock.id}`, {
       method: 'PUT',
-      body: block
+      body: updatedBlock
     })
   } catch {
-    message.error('Failed to save')
+    message.error('Failed to save block')
   } finally {
     saving.value = false
   }
 }
 
-/**
- * Add new block
- */
+// --- ADD NEW BLOCK ---
 async function addBlock(type: 'text' | 'voice' | 'sketch') {
-  const block = await $api('/blocks', {
-    method: 'POST',
-    body: {
-      jotting_id: jotting.value.id,
-      type
-    }
-  })
-  jotting.value.blocks.push(block)
+  if (!jotting.value) return
+
+  try {
+    const block = await $api('/blocks', {
+      method: 'POST',
+      body: {
+        jotting_id: jotting.value.id,
+        type
+      }
+    })
+    jotting.value.blocks.push(block)
+  } catch {
+    message.error('Failed to add block')
+  }
 }
+
+// --- SAFE v-model FOR TITLE ---
+const jottingTitle = computed({
+  get: () => jotting.value?.title || '',
+  set: (val: string) => {
+    if (jotting.value) {
+      jotting.value.title = val
+      // autosave title immediately
+      $api(`/jottings/${jotting.value.id}`, {
+        method: 'PUT',
+        body: { title: val }
+      }).catch(() => message.error('Failed to save title'))
+    }
+  }
+})
+
+watch(
+  () => jotting.value?.blocks,
+  (blocks) => {
+    if (!blocks) return
+    blocks.forEach((block) => saveBlock(block))
+  },
+  { deep: true }
+)
+
 </script>
 
 <template>
@@ -59,11 +101,11 @@ async function addBlock(type: 'text' | 'voice' | 'sketch') {
       Loading jotting…
     </div>
 
-    <template v-else>
+    <template v-else-if="jotting">
 
       <!-- Title -->
       <input
-        v-model="jotting.title"
+        v-model="jottingTitle"
         class="w-full text-2xl font-semibold bg-transparent
                border-none focus:ring-0 outline-none"
         placeholder="Untitled jotting"
@@ -71,18 +113,11 @@ async function addBlock(type: 'text' | 'voice' | 'sketch') {
 
       <!-- Blocks -->
       <div class="space-y-6">
-        <component
-          v-for="block in jotting.blocks"
-          :key="block.id"
-          :is="
-            block.type === 'text'
-              ? TextBlock
-              : block.type === 'voice'
-              ? VoiceBlock
-              : SketchBlock
-          "
-          :block="block"
-          @update="saveBlock"
+      <component
+        v-for="block in jotting.blocks"
+        :key="block.id"
+        :is="blockComponents[block.type]"
+        :block="block"
         />
       </div>
 
@@ -129,5 +164,9 @@ async function addBlock(type: 'text' | 'voice' | 'sketch') {
 
     </template>
 
+    <!-- Error -->
+    <div v-else class="text-center py-20 opacity-60">
+      Failed to load jotting.
+    </div>
   </div>
 </template>

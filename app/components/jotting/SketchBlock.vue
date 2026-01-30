@@ -1,66 +1,53 @@
 <script setup lang="ts">
-const model = defineModel<string | null>()
+import { defineModel, ref, onMounted } from 'vue'
+
+const block = defineModel<{ id: string; type: 'sketch'; data: string | null }>()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let ctx: CanvasRenderingContext2D | null = null
-let drawing = false
 
 onMounted(() => {
   const canvas = canvasRef.value!
   canvas.width = 600
   canvas.height = 400
-
   ctx = canvas.getContext('2d')!
-  ctx.lineWidth = 3
-  ctx.lineCap = 'round'
 
-  // restore if exists
-  if (model.value) {
+  if (block.data) {
     const img = new Image()
-    img.src = model.value
+    img.src = block.data
     img.onload = () => ctx!.drawImage(img, 0, 0)
   }
 })
 
 function start(e: MouseEvent) {
-  drawing = true
   ctx!.beginPath()
   ctx!.moveTo(e.offsetX, e.offsetY)
+  canvasRef.value!.addEventListener('mousemove', draw)
 }
 
 function draw(e: MouseEvent) {
-  if (!drawing) return
   ctx!.lineTo(e.offsetX, e.offsetY)
   ctx!.stroke()
+  block.data = canvasRef.value!.toDataURL()
 }
 
 function stop() {
-  drawing = false
-  model.value = canvasRef.value!.toDataURL('image/png')
+  canvasRef.value!.removeEventListener('mousemove', draw)
 }
 
 function clearCanvas() {
   ctx!.clearRect(0, 0, 600, 400)
-  model.value = null
+  block.data = null
 }
 </script>
 
 <template>
-  <div class="space-y-3">
-    <canvas
-      ref="canvasRef"
-      class="rounded-xl border border-primary/20 bg-surface"
-      @mousedown="start"
-      @mousemove="draw"
-      @mouseup="stop"
-      @mouseleave="stop"
-    />
-
-    <button
-      @click="clearCanvas"
-      class="text-sm text-primary hover:underline"
-    >
-      Clear sketch
-    </button>
-  </div>
+  <canvas
+    ref="canvasRef"
+    @mousedown="start"
+    @mouseup="stop"
+    @mouseleave="stop"
+    class="rounded-xl border border-primary/20 bg-surface"
+  />
+  <button @click="clearCanvas">Clear</button>
 </template>

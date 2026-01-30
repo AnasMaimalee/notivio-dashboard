@@ -4,10 +4,11 @@ const form = reactive({
   name: '',
   email: ''
 })
+const { $api } = useNuxtApp()
 
 onMounted(async () => {
   try {
-    const res = await $fetch('/api/profile')
+    const res = await $api('/api/profile')
     form.name = res.name
     form.email = res.email
   } catch (e) {
@@ -17,7 +18,7 @@ onMounted(async () => {
 
 async function updateProfile() {
   try {
-    await $fetch('/api/profile', {
+    await $api('/api/profile', {
       method: 'PUT',
       body: form
     })
