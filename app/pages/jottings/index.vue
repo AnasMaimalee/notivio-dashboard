@@ -1,6 +1,10 @@
 <script setup lang="ts">
 const { $api } = useNuxtApp()
 
+definePageMeta({
+    middleware: 'auth',
+    layout: 'dashboard'
+})
 /**
  * Fetch jottings from backend
  * Expected endpoint: GET /jottings
@@ -13,6 +17,7 @@ const jottings = computed(() => data.value?.data ?? [])
 </script>
 
 <template>
+<PageHeader title="Jotting" back />
   <!-- Loading -->
   <div v-if="pending" class="opacity-60">
     Loading your jottings…

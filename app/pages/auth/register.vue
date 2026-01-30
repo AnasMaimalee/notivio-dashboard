@@ -26,7 +26,7 @@ async function register() {
     body: form
   })
 
-  navigateTo('/onboarding/select')
+  navigateTo('/onboarding/theme')
 }
 </script>
 
@@ -37,8 +37,8 @@ async function register() {
   >
     <div
       class="w-full max-w-md space-y-8
-             bg-surface border border-primary/10
-             rounded-3xl p-8"
+             bg-surface"
+            
     >
       <div class="text-center space-y-2">
         <h1 class="text-2xl font-bold">Create account</h1>
@@ -46,22 +46,20 @@ async function register() {
       </div>
 
       <form @submit.prevent="register" class="space-y-4">
-        <input v-model="form.name" placeholder="Name" class="input" />
-        <input v-model="form.email" placeholder="Email" class="input" />
+        <div class="space-y-3">
+            <input v-model="form.name" placeholder="Name" 
+            class="w-full p-3 rounded-lg border border-primary/20 focus:border-primary focus:ring focus:ring-primary/20 mb-3" />
+            <div class="mt-3"></div>
+            <input v-model="form.email" placeholder="Email" 
+            class="w-full p-3 rounded-lg border border-primary/20 focus:border-primary focus:ring focus:ring-primary/20 mb-3" />
+            <div class="mt-3"></div>
+            <input v-model="form.password" type="password" placeholder="Password" 
+            class="w-full p-3 rounded-lg border border-primary/20 focus:border-primary focus:ring focus:ring-primary/20 mb-3" />
+            <div class="mt-3"></div>
+            <input v-model="form.password_confirmation" type="password" placeholder="Confirm Password" 
+            class="w-full p-3 rounded-lg border border-primary/20 focus:border-primary focus:ring focus:ring-primary/20 mb-3" />
 
-        <input
-          v-model="form.password"
-          type="password"
-          placeholder="Password"
-          class="input"
-        />
-
-        <input
-          v-model="form.password_confirmation"
-          type="password"
-          placeholder="Confirm Password"
-          class="input"
-        />
+        </div>
 
         <!-- Password strength -->
         <ul class="text-xs space-y-1">

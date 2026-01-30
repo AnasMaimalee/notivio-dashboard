@@ -4,10 +4,14 @@ import { useRouter } from 'vue-router'
 import { useState } from '#app'
 import { notify } from '@/utils/notify' // <-- global notification helper
 import { message } from 'ant-design-vue'
+const { $applyTheme } = useNuxtApp()
 
 const router = useRouter()
 const theme = useState('theme')
 
+definePageMeta({
+    layouts: 'auth',
+})
 // form state
 const email = ref('')
 const password = ref('')
@@ -21,26 +25,21 @@ const { $api } = useNuxtApp()
 
 async function login() {
   loading.value = true
-
   try {
-    const res = await $api('/auth/login', {
-      method: 'POST',
-      body: {
-        email: email.value,
-        password: password.value,
-      },
+    const auth = useAuthStore()
+
+    await auth.login({
+      email: email.value,
+      password: password.value,
     })
 
-    // Auth store
-    const auth = useAuthStore()
-    auth.setAuth(res)
+    // Apply theme if present
+    if (auth.theme) {
+      $applyTheme(auth.theme, 'light')
+    }
 
-    // Theme
-    theme.value = res.theme
-    $applyTheme(res.theme, 'light')
-
-    // Redirect based on menu / role
-    const firstMenu = res.menus?.[0]?.route || '/dashboard'
+    // Redirect
+    const firstMenu = auth.menus?.[0]?.route || '/dashboard'
     router.push(firstMenu)
 
   } catch (e: any) {
@@ -49,6 +48,7 @@ async function login() {
     loading.value = false
   }
 }
+
 
 </script>
 

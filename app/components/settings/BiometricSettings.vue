@@ -6,7 +6,7 @@ const { $api } = useNuxtApp()
 // fetch initial state from backend
 onMounted(async () => {
   try {
-    const res = await $api('/api/profile/security')
+    const res = await $api('/profile/security')
     biometricEnabled.value = res.biometric_enabled
   } catch (e) {
     console.error(e)
@@ -15,7 +15,7 @@ onMounted(async () => {
 
 async function toggleBiometric() {
   try {
-    await $fetch('/api/profile/security', {
+    await $fetch('/profile/security', {
       method: 'POST',
       body: { biometric_enabled: !biometricEnabled.value }
     })

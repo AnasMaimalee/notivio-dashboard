@@ -1,172 +1,195 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted, type DefineComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 
 import TextBlock from '@/components/jotting/TextBlock.vue'
 import VoiceBlock from '@/components/jotting/VoiceBlock.vue'
 import SketchBlock from '@/components/jotting/SketchBlock.vue'
+import PageHeader from '~/components/PageHeader.vue'
 
-type BlockType = 'text' | 'voice' | 'sketch'
+definePageMeta({
+  middleware: 'auth',
+  layout: 'dashboard'
+})
 
-const blockComponents: Record<BlockType, DefineComponent<{}, {}, any>> = {
-  text: TextBlock,
-  voice: VoiceBlock,
-  sketch: SketchBlock
-}
 const route = useRoute()
 const { $api } = useNuxtApp()
 
-// jotting state
-const jotting = ref<{
-  id: string
-  title: string
-  blocks: Array<any>
-} | null>(null)
+/* -----------------------------
+   TYPES
+----------------------------- */
+type BlockType = 'text' | 'voice' | 'sketch'
 
+type VirtualBlock =
+  | { id: string; type: 'text'; content: string }
+  | { id: string; type: 'voice'; path: string }
+  | { id: string; type: 'sketch'; data: any }
+
+/* -----------------------------
+   COMPONENT MAP
+----------------------------- */
+const blockComponents: Record<BlockType, DefineComponent<any, any, any>> = {
+  text: TextBlock,
+  voice: VoiceBlock,
+  sketch: SketchBlock,
+}
+
+/* -----------------------------
+   STATE
+----------------------------- */
+const jotting = ref<any>(null)
+const pending = ref(true)
+const error = ref(false)
 const saving = ref(false)
 
-// fetch jotting via useAsyncData
-const { data, pending, error } = useAsyncData('jotting', () => 
-  $api(`/jottings/${route.params.id}`)
-)
+/* -----------------------------
+   FETCH JOTTING (FIXED)
+----------------------------- */
+const fetchJotting = async () => {
+  pending.value = true
+  error.value = false
 
-// populate jotting once data loads
-if (data.value) jotting.value = data.value
-
-// --- AUTOSAVE BLOCK ---
-async function saveBlock(updatedBlock: any) {
-  saving.value = true
   try {
-    await $api(`/blocks/${updatedBlock.id}`, {
+    const res = await $api(`/jottings/${route.params.id}`)
+    jotting.value = res
+  } catch (e) {
+    error.value = true
+    message.error('Failed to load jotting')
+  } finally {
+    pending.value = false
+  }
+}
+
+onMounted(fetchJotting)
+
+/* -----------------------------
+   TITLE (AUTOSAVE)
+----------------------------- */
+const jottingTitle = computed({
+  get: () => jotting.value?.title ?? '',
+  set: (val: string) => {
+    if (!jotting.value) return
+    jotting.value.title = val
+    saveJotting()
+  }
+})
+
+/* -----------------------------
+   VIRTUAL BLOCKS
+----------------------------- */
+const blocks = computed<VirtualBlock[]>(() => {
+  if (!jotting.value) return []
+
+  const result: VirtualBlock[] = []
+
+  result.push({
+    id: 'text',
+    type: 'text',
+    content: jotting.value.content ?? '',
+  })
+
+  if (jotting.value.voice_path) {
+    result.push({
+      id: 'voice',
+      type: 'voice',
+      path: jotting.value.voice_path,
+    })
+  }
+
+  if (jotting.value.sketch_data) {
+    result.push({
+      id: 'sketch',
+      type: 'sketch',
+      data: jotting.value.sketch_data,
+    })
+  }
+
+  return result
+})
+
+/* -----------------------------
+   SAVE JOTTING
+----------------------------- */
+async function saveJotting() {
+  if (!jotting.value) return
+  saving.value = true
+
+  try {
+    await $api(`/jottings/${jotting.value.id}`, {
       method: 'PUT',
-      body: updatedBlock
+      body: {
+        title: jotting.value.title,
+        content: jotting.value.content,
+        voice_path: jotting.value.voice_path,
+        sketch_data: jotting.value.sketch_data,
+      }
     })
   } catch {
-    message.error('Failed to save block')
+    message.error('Failed to save jotting')
   } finally {
     saving.value = false
   }
 }
 
-// --- ADD NEW BLOCK ---
-async function addBlock(type: 'text' | 'voice' | 'sketch') {
+/* -----------------------------
+   BLOCK UPDATES
+----------------------------- */
+function updateBlock(block: VirtualBlock, payload: any) {
   if (!jotting.value) return
 
-  try {
-    const block = await $api('/blocks', {
-      method: 'POST',
-      body: {
-        jotting_id: jotting.value.id,
-        type
-      }
-    })
-    jotting.value.blocks.push(block)
-  } catch {
-    message.error('Failed to add block')
-  }
+  if (block.type === 'text') jotting.value.content = payload
+  if (block.type === 'voice') jotting.value.voice_path = payload
+  if (block.type === 'sketch') jotting.value.sketch_data = payload
+
+  saveJotting()
 }
-
-// --- SAFE v-model FOR TITLE ---
-const jottingTitle = computed({
-  get: () => jotting.value?.title || '',
-  set: (val: string) => {
-    if (jotting.value) {
-      jotting.value.title = val
-      // autosave title immediately
-      $api(`/jottings/${jotting.value.id}`, {
-        method: 'PUT',
-        body: { title: val }
-      }).catch(() => message.error('Failed to save title'))
-    }
-  }
-})
-
-watch(
-  () => jotting.value?.blocks,
-  (blocks) => {
-    if (!blocks) return
-    blocks.forEach((block) => saveBlock(block))
-  },
-  { deep: true }
-)
-
 </script>
 
-<template>
-  <div class="max-w-3xl mx-auto space-y-8">
 
+<template>
+  <div class="max-w-3xl mx-auto space-y-10">
+    <page-header  title="Jotting" back/>
     <!-- Loading -->
-    <div v-if="pending" class="opacity-60 text-center py-20">
+    <div v-if="pending" class="text-center py-20 opacity-60">
       Loading jotting…
     </div>
 
-    <template v-else-if="jotting">
+    <!-- Error -->
+    <div v-else-if="error" class="text-center py-20 text-red-500">
+      Failed to load jotting
+    </div>
 
-      <!-- Title -->
+    <!-- Content -->
+    <template v-else>
+      <h1 class="sr-only">
+        {{ jotting?.title || 'Jotting' }}
+      </h1>
+
       <input
         v-model="jottingTitle"
-        class="w-full text-2xl font-semibold bg-transparent
-               border-none focus:ring-0 outline-none"
+        class="w-full text-3xl font-semibold bg-transparent
+               outline-none border-none"
         placeholder="Untitled jotting"
       />
 
-      <!-- Blocks -->
-      <div class="space-y-6">
-      <component
-        v-for="block in jotting.blocks"
-        :key="block.id"
-        :is="blockComponents[block.type]"
-        :block="block"
+      <div class="space-y-8">
+        <component
+          v-for="block in blocks"
+          :key="block.id"
+          :is="blockComponents[block.type]"
+          v-bind="block"
+          @update="val => updateBlock(block, val)"
         />
       </div>
 
-      <!-- Toolbar -->
-      <div
-        class="sticky bottom-6 flex justify-center gap-3
-               bg-bg/80 backdrop-blur rounded-full p-3"
-      >
-        <button
-          @click="addBlock('text')"
-          class="px-4 py-2 rounded-full
-                 bg-surface border border-primary/20
-                 hover:bg-primary/10"
-        >
-          ✍️ Text
-        </button>
-
-        <button
-          @click="addBlock('voice')"
-          class="px-4 py-2 rounded-full
-                 bg-surface border border-primary/20
-                 hover:bg-primary/10"
-        >
-          🎙 Voice
-        </button>
-
-        <button
-          @click="addBlock('sketch')"
-          class="px-4 py-2 rounded-full
-                 bg-surface border border-primary/20
-                 hover:bg-primary/10"
-        >
-          ✏️ Sketch
-        </button>
-      </div>
-
-      <!-- Saving Indicator -->
       <div
         v-if="saving"
-        class="fixed bottom-4 right-6 text-xs opacity-60"
+        class="fixed bottom-6 right-6 text-xs opacity-60"
       >
         Saving…
       </div>
-
     </template>
 
-    <!-- Error -->
-    <div v-else class="text-center py-20 opacity-60">
-      Failed to load jotting.
-    </div>
   </div>
 </template>

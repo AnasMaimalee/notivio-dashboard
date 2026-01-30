@@ -8,7 +8,7 @@ const { $api } = useNuxtApp()
 
 onMounted(async () => {
   try {
-    const res = await $api('/api/profile')
+    const res = await $api('/profile')
     form.name = res.name
     form.email = res.email
   } catch (e) {
@@ -18,7 +18,7 @@ onMounted(async () => {
 
 async function updateProfile() {
   try {
-    await $api('/api/profile', {
+    await $api('/profile', {
       method: 'PUT',
       body: form
     })

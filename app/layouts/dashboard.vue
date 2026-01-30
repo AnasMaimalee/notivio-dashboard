@@ -1,9 +1,17 @@
 <script setup lang="ts">
-const colorMode = useColorMode()
-const { $applyTheme } = useNuxtApp()
+import { ref, watch } from 'vue'
 
+const colorMode = useColorMode()
+const { $applyTheme, $api } = useNuxtApp()
+const router = useRouter()
+
+definePageMeta({
+    layouts: 'default',
+    middleware: 'auth'
+})
 // theme comes from backend (login / refresh / store)
 const theme = useState<any>('theme')
+const showMenu = ref(false)
 
 watch(
   () => colorMode.value,
@@ -19,8 +27,15 @@ function toggleTheme() {
   colorMode.preference =
     colorMode.value === 'dark' ? 'light' : 'dark'
 }
-</script>
 
+async function logout() {
+  try {
+    await $api('/auth/logout', { method: 'POST' })
+  } finally {
+    router.push('/auth/login')
+  }
+}
+</script>
 
 <template>
   <div
@@ -58,13 +73,12 @@ function toggleTheme() {
         </nav>
 
         <!-- Actions -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 relative">
 
           <!-- Theme Toggle -->
           <button
             @click="toggleTheme"
-            class="p-2 rounded-full
-                   hover:bg-primary/10 transition"
+            class="p-2 rounded-full hover:bg-primary/10 transition"
           >
             <Icon
               :name="colorMode.value === 'dark'
@@ -76,8 +90,7 @@ function toggleTheme() {
 
           <!-- Notifications -->
           <button
-            class="relative p-2 rounded-full
-                   hover:bg-primary/10 transition"
+            class="relative p-2 rounded-full hover:bg-primary/10 transition"
           >
             <Icon name="lucide:bell" class="w-5 h-5" />
             <span
@@ -86,21 +99,62 @@ function toggleTheme() {
             />
           </button>
 
-          <!-- Profile -->
-          <NuxtLink
-            to="/profile"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-full
-                   hover:bg-primary/10 transition"
-          >
-            <img
-              src="https://i.pravatar.cc/40"
-              class="w-8 h-8 rounded-full
-                     border border-primary/20"
-            />
-            <span class="hidden sm:block text-sm font-medium">
-              Me
-            </span>
-          </NuxtLink>
+          <!-- Profile Dropdown -->
+          <div class="relative">
+            <button
+              @click="showMenu = !showMenu"
+              class="flex items-center gap-2 px-3 py-1.5 rounded-full
+                     hover:bg-primary/10 transition"
+            >
+              <img
+                src="https://i.pravatar.cc/40"
+                class="w-8 h-8 rounded-full border border-primary/20"
+              />
+              <span class="hidden sm:block text-sm font-medium">
+                Me
+              </span>
+              <Icon name="lucide:chevron-down" class="w-4 h-4 opacity-60" />
+            </button>
+
+            <!-- Dropdown -->
+            <div
+              v-if="showMenu"
+              @click.outside="showMenu = false"
+              class="absolute right-0 mt-3 w-44 rounded-xl
+                     bg-surface border border-primary/10
+                     shadow-xl overflow-hidden"
+            >
+              <NuxtLink
+                to="/profile"
+                class="flex items-center gap-2 px-4 py-2 text-sm
+                       hover:bg-primary/10"
+              >
+                <Icon name="lucide:user" class="w-4 h-4" />
+                Profile
+              </NuxtLink>
+
+              <NuxtLink
+                to="/settings"
+                class="flex items-center gap-2 px-4 py-2 text-sm
+                       hover:bg-primary/10"
+              >
+                <Icon name="lucide:settings" class="w-4 h-4" />
+                Settings
+              </NuxtLink>
+
+              <div class="border-t border-primary/10" />
+
+              <button
+                @click="logout"
+                class="w-full flex items-center gap-2 px-4 py-2 text-sm
+                       text-red-500 hover:bg-red-500/10"
+              >
+                <Icon name="lucide:log-out" class="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+          </div>
+
         </div>
 
       </div>

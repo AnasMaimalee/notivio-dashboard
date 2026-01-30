@@ -27,9 +27,6 @@ export const useAuthStore = defineStore('auth', {
       this.theme = res.theme
       this.menus = res.menus // store menus from backend
 
-      if(res.theme){
-        $applyTheme(res.theme, 'light')
-      }
     },
 
     async logout() {
@@ -43,12 +40,18 @@ export const useAuthStore = defineStore('auth', {
       navigateTo('/login')
     },
 
-    async fetchMe() {
-      const { $api } = useNuxtApp()
-      const res: any = await $api('/auth/me')
-      this.user = res.user
-      this.theme = res.theme
-      this.menus = res.menus // fetch menus dynamically
+   async fetchMe() {
+    const { $api, $applyTheme } = useNuxtApp()
+    const res: any = await $api('/auth/me')
+
+    this.user = res.user
+    this.theme = res.theme
+    this.menus = res.menus
+
+    if (res.theme) {
+        $applyTheme(res.theme, 'light')
+    }
     },
   },
 })
+

@@ -20,7 +20,7 @@ async function updatePassword() {
   if (!strong.value) return
 
   try {
-    await $api('/api/profile/change-password', {
+    await $api('/profile/change-password', {
       method: 'POST',
       body: form
     })

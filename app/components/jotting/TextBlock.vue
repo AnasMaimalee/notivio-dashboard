@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { defineModel } from '#imports'
+const props = defineProps<{
+  content: string
+}>()
 
-const block = defineModel<{ id: string; type: 'text'; content: string }>()
+const emit = defineEmits<{
+  (e: 'update', value: string): void
+}>()
 </script>
 
 <template>
   <textarea
-    v-model="block.content"
-    class="w-full min-h-[140px] p-4 rounded-2xl border border-primary/10 bg-surface"
+    class="w-full min-h-[200px]
+           bg-transparent outline-none resize-none
+           text-base leading-relaxed"
+    :value="props.content"
+    placeholder="Write your thoughts…"
+    @input="emit('update', ($event.target as HTMLTextAreaElement).value)"
   />
 </template>
